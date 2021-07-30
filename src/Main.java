@@ -164,7 +164,7 @@ public class Main {
             //Create Books table
             stmt.executeUpdate("CREATE TABLE BOOKS(BID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, BNAME VARCHAR(50), TYPE VARCHAR(20),BEST_SELLER BOOLEAN,PRICE INT)");
             //Create Issued Table
-            stmt.executeUpdate("CREATE TABLE ISSUED(IID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, UID INT, BID INT, ISSUED_DATE VARCHAR(20), RETURN_DATE VARCHAR(20), DUE_DATE VARCHAR(20), FINE INT)");
+            stmt.executeUpdate("CREATE TABLE ISSUED(IID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, UID INT, BID INT, ISSUED_DATE VARCHAR(20), RETURN_DATE VARCHAR(20), DUE_DATE VARCHAR(20),RENEWED BOOLEAN NOT NULL DEFAULT 0,RESERVED BOOLEAN NOT NULL DEFAULT 0, FINE INT)");
             //Insert into books table
             stmt.executeUpdate("INSERT INTO BOOKS(BNAME, TYPE,BEST_SELLER, PRICE) VALUES ('War and Peace','Book',TRUE, 200),  ('The Guest Book','Reference Book',FALSE, 300), ('The Perfect Murder','Audio/Video',FALSE, 150), ('Accidental Presidents','Book',FALSE, 250), ('The Wicked King','Magezine',FALSE, 350)");
 
@@ -258,11 +258,87 @@ public class Main {
                                   }
         );
 
+        JButton request_book=new JButton("Request Book"); //creating instance of JButton for adding books
+        request_book.setBounds(280,20,120,25);
 
+        request_book.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e){
+                //set frame to request a book
+                JFrame g = new JFrame("Enter Book Details");
+                //g.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                // set labels
+                JLabel l1,l2,l3;
+                l1=new JLabel("BID");  //lebel 1 for book ID
+                l1.setBounds(30,15, 100,30);
+
+
+                l2=new JLabel("Book Name");  //label 2 for book name
+                l2.setBounds(30,53, 100,30);
+
+                l3=new JLabel("Requested UID");  //label 3 for UID
+                l3.setBounds(30,90, 100,30);
+
+                //set text field for book id
+                JTextField F_bid = new JTextField();
+                F_bid.setBounds(130, 15, 200, 30);
+
+                //set text field for book name
+                JTextField F_bname=new JTextField();
+                F_bname.setBounds(130, 53, 200, 30);
+
+                //set text field for UID
+                JTextField F_uid=new JTextField();
+                F_uid.setBounds(130, 90, 200, 30);
+
+                JButton create_but=new JButton("Submit");//creating instance of JButton to submit details
+                create_but.setBounds(160,185,80,25);//x axis, y axis, width, height
+                create_but.addActionListener(new ActionListener() {
+
+                    public void actionPerformed(ActionEvent e){
+                        // assign the book name, type, price
+                        String bid = F_bid.getText();
+                        String bname = F_bname.getText();
+                        String uid = F_uid.getText();
+
+                        Connection connection = connect();
+
+                        try {
+                            Statement stmt = connection.createStatement();
+                            stmt.executeUpdate("USE LIBRARY");
+                            stmt.executeUpdate("UPDATE ISSUED SET RESERVED='"+1+"' WHERE BID="+bid);
+                            JOptionPane.showMessageDialog(null,"Book reserved!");
+                            g.dispose();
+
+                        }
+
+                        catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            JOptionPane.showMessageDialog(null, e1);
+                        }
+
+                    }
+
+                });
+
+                g.add(create_but);
+                g.add(l1);
+                g.add(l2);
+                g.add(l3);
+                g.add(F_bid);
+                g.add(F_bname);
+                g.add(F_uid);
+                g.setSize(400,300);//400 width and 500 height
+                g.setLayout(null);//using no layout managers
+                g.setVisible(true);//making the frame visible
+                g.setLocationRelativeTo(null);
+
+            }
+        });
 
         f.add(my_book); //add my books
         f.add(view_but); // add view books
-        f.setSize(300,100);//400 width and 500 height
+        f.add(request_book);//add request book
+        f.setSize(450,100);//400 width and 500 height
         f.setLayout(null);//using no layout managers
         f.setVisible(true);//making the frame visible
         f.setLocationRelativeTo(null);
@@ -655,7 +731,7 @@ public class Main {
 
 
                         //int period_int = Integer.parseInt(period);
-                        Calendar c = Calendar.getInstance();
+                        //Calendar c = Calendar.getInstance();
                         Date issued_Date1 = null;
                         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
                         try {
@@ -663,6 +739,7 @@ public class Main {
                         } catch (ParseException parseException) {
                             parseException.printStackTrace();
                         }
+                        Calendar c = Calendar.getInstance();
                         c.setTime(issued_Date1);
                         c.add(Calendar.DATE,14);
                         String due_Date = sdf.format(c.getTime());
@@ -737,6 +814,12 @@ public class Main {
                                 stmt.executeUpdate("INSERT INTO ISSUED(UID,BID,ISSUED_DATE,DUE_DATE) VALUES ('"+uid+"','"+bid+"','"+issued_date+"','"+due_Date+"')");
                                 JOptionPane.showMessageDialog(null,"Book Issued!\n Due date is :"+ due_Date);
                                 g.dispose();
+                            }else if(type.equals("Audio/Video")){
+                                Statement stmt = connection.createStatement();
+                                stmt.executeUpdate("USE LIBRARY");//use database
+                                stmt.executeUpdate("INSERT INTO ISSUED(UID,BID,ISSUED_DATE,DUE_DATE) VALUES ('"+uid+"','"+bid+"','"+issued_date+"','"+due_Date+"')");
+                                JOptionPane.showMessageDialog(null,"Audio/Video Issued!\n Due date is :"+ due_Date);
+                                g.dispose();
                             }
 
                         }
@@ -768,6 +851,106 @@ public class Main {
 
             }
         });
+
+        JButton renew_book=new JButton("Renew Book"); //creating instance of JButton to return books
+        renew_book.setBounds(20,100,120,25);
+
+        renew_book.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame g = new JFrame("Enter Details");
+
+                JLabel l1;
+                l1=new JLabel("Issue ID(IID)");  //Label 1 for Issue ID
+                l1.setBounds(30,15, 100,30);
+
+
+                JTextField F_iid = new JTextField();
+                F_iid.setBounds(230, 15, 130, 30);
+
+
+                JButton create_renew_but=new JButton("Renew");
+                create_renew_but.setBounds(130,170,80,25);
+
+                create_renew_but.addActionListener(new ActionListener() {
+
+                    public void actionPerformed(ActionEvent e) {
+
+                        String iid = F_iid.getText();
+
+                        Connection connection = connect();
+
+                        Statement stmt = null;
+                        try {
+                            stmt = connection.createStatement();
+                            stmt.executeUpdate("USE LIBRARY");
+
+                            boolean renew = false;
+                            boolean reserve = false;
+                            String due_date = "",issue_date = "";
+                            ResultSet rs = stmt.executeQuery("SELECT RENEWED,DUE_DATE,ISSUED_DATE,RESERVED FROM ISSUED WHERE IID="+iid);
+                            while (rs.next()) {
+                                renew = rs.getBoolean(1);
+                                due_date = rs.getString(2);
+                                issue_date = rs.getString(3);
+                                reserve = rs.getBoolean(4);
+                            }
+
+                            Date date_1=new SimpleDateFormat("dd-MM-yyyy").parse(due_date);
+                            Date date_2=new SimpleDateFormat("dd-MM-yyyy").parse(issue_date);
+                            //subtract the dates and store in diff
+                            long diff = date_1.getTime() - date_2.getTime();
+                            //Convert diff from milliseconds to days
+                            ex.days=(int)(TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS));
+
+
+                            if(renew == false && reserve == false){
+                                 stmt = connection.createStatement();
+                                 stmt.executeUpdate("USE LIBRARY");
+                                Date due_date1 = null;
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                                try {
+                                    due_date1 = sdf.parse(due_date);
+                                } catch (ParseException parseException) {
+                                    parseException.printStackTrace();
+                                }
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(due_date1);
+                                c.add(Calendar.DATE,ex.days);
+                                due_date = sdf.format(c.getTime());
+
+                                 stmt.executeUpdate("UPDATE ISSUED SET DUE_DATE='"+due_date+"',RENEWED='"+1+"' WHERE IID="+iid);
+                                 g.dispose();
+                                JOptionPane.showMessageDialog(null,"Book Renewed!");
+                            }
+                            else if(renew == true){
+                                JOptionPane.showMessageDialog(null,"Request Denied! \n Item can be renewed once already!");
+                            }else if (reserve == true){
+                                JOptionPane.showMessageDialog(null,"Request Denied! \n Item has been requested by another user!");
+
+                            }
+
+
+                        } catch (SQLException | ParseException throwables) {
+                            throwables.printStackTrace();
+                        }
+
+
+                      }
+                    }
+                );
+
+                g.add(create_renew_but);
+                g.add(l1);
+                g.add(F_iid);
+                g.setSize(400,250);//400 width and 500 height
+                g.setLayout(null);//using no layout managers
+                g.setVisible(true);//making the frame visible
+                g.setLocationRelativeTo(null);
+
+                }
+            }
+        );
+
 
 
         JButton return_book=new JButton("Return Book"); //creating instance of JButton to return books
@@ -892,8 +1075,10 @@ public class Main {
             }
         });
 
+
         f.add(create_but);
         f.add(return_book);
+        f.add(renew_book);
         f.add(issue_book);
         f.add(add_book);
         f.add(issued_but);
