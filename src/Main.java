@@ -5,6 +5,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -161,11 +162,11 @@ public class Main {
             //Insert into users table
             stmt.executeUpdate("INSERT INTO USERS(USERNAME, PASSWORD, AGE , ADDRESS ,PHONENO ,ADMIN ) VALUES('admin','admin',40,'123 ABCD',123-456-789,TRUE)");
             //Create Books table
-            stmt.executeUpdate("CREATE TABLE BOOKS(BID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, BNAME VARCHAR(50), GENRE VARCHAR(20), PRICE INT)");
+            stmt.executeUpdate("CREATE TABLE BOOKS(BID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, BNAME VARCHAR(50), TYPE VARCHAR(20),BEST_SELLER BOOLEAN,PRICE INT)");
             //Create Issued Table
-            stmt.executeUpdate("CREATE TABLE ISSUED(IID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, UID INT, BID INT, ISSUED_DATE VARCHAR(20), RETURN_DATE VARCHAR(20), PERIOD INT, FINE INT)");
+            stmt.executeUpdate("CREATE TABLE ISSUED(IID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, UID INT, BID INT, ISSUED_DATE VARCHAR(20), RETURN_DATE VARCHAR(20), DUE_DATE VARCHAR(20), FINE INT)");
             //Insert into books table
-            stmt.executeUpdate("INSERT INTO BOOKS(BNAME, GENRE, PRICE) VALUES ('War and Peace', 'Mystery', 200),  ('The Guest Book', 'Fiction', 300), ('The Perfect Murder','Mystery', 150), ('Accidental Presidents', 'Biography', 250), ('The Wicked King','Fiction', 350)");
+            stmt.executeUpdate("INSERT INTO BOOKS(BNAME, TYPE,BEST_SELLER, PRICE) VALUES ('War and Peace','Book',TRUE, 200),  ('The Guest Book','Reference Book',FALSE, 300), ('The Perfect Murder','Audio/Video',FALSE, 150), ('Accidental Presidents','Book',FALSE, 250), ('The Wicked King','Magezine',FALSE, 350)");
 
             resultSet.close();
         }
@@ -226,7 +227,7 @@ public class Main {
                                           //.iid,issued.uid,issued.bid,issued.issued_date,issued.return_date,issued,
                                           Connection connection = connect(); //connect to database
                                           //retrieve data
-                                          String sql="select distinct issued.*,books.bname,books.genre,books.price from issued,books " + "where ((issued.uid=" + UID_int + ") and (books.bid in (select bid from issued where issued.uid="+UID_int+"))) group by iid";
+                                          String sql="select distinct issued.*,books.bname,books.type,books.price from issued,books " + "where ((issued.uid=" + UID_int + ") and (books.bid in (select bid from issued where issued.uid="+UID_int+"))) group by iid";
                                           String sql1 = "select bid from issued where uid="+UID_int;
                                           try {
                                               Statement stmt = connection.createStatement();
@@ -524,37 +525,44 @@ public class Main {
                 JFrame g = new JFrame("Enter Book Details");
                 //g.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 // set labels
-                JLabel l1,l2,l3;
+                JLabel l1,l2,l3,l4;
                 l1=new JLabel("Book Name");  //lebel 1 for book name
                 l1.setBounds(30,15, 100,30);
 
 
-                l2=new JLabel("Genre");  //label 2 for genre
+                l2=new JLabel("Type");  //label 2 for type
                 l2.setBounds(30,53, 100,30);
 
-                l3=new JLabel("Price");  //label 2 for price
+                l3=new JLabel("Best Seller");  //label 3 for price
                 l3.setBounds(30,90, 100,30);
+
+                l4=new JLabel("Price");  //label 4 for price
+                l4.setBounds(30,128, 100,30);
 
                 //set text field for book name
                 JTextField F_bname = new JTextField();
                 F_bname.setBounds(110, 15, 200, 30);
 
-                //set text field for genre
-                JTextField F_genre=new JTextField();
-                F_genre.setBounds(110, 53, 200, 30);
+                //set text field for Type
+                JTextField F_type=new JTextField();
+                F_type.setBounds(110, 53, 200, 30);
+                //set text field for best-seller
+                JTextField F_bestSeller=new JTextField();
+                F_type.setBounds(110, 90, 200, 30);
                 //set text field for price
                 JTextField F_price=new JTextField();
-                F_price.setBounds(110, 90, 200, 30);
+                F_price.setBounds(110, 128, 200, 30);
 
 
                 JButton create_but=new JButton("Submit");//creating instance of JButton to submit details
-                create_but.setBounds(130,130,80,25);//x axis, y axis, width, height
+                create_but.setBounds(130,180,80,25);//x axis, y axis, width, height
                 create_but.addActionListener(new ActionListener() {
 
                     public void actionPerformed(ActionEvent e){
-                        // assign the book name, genre, price
+                        // assign the book name, type, price
                         String bname = F_bname.getText();
-                        String genre = F_genre.getText();
+                        String type = F_type.getText();
+                        String bestseller = F_bestSeller.getText();
                         String price = F_price.getText();
                         //convert price of integer to int
                         int price_int = Integer.parseInt(price);
@@ -564,7 +572,7 @@ public class Main {
                         try {
                             Statement stmt = connection.createStatement();
                             stmt.executeUpdate("USE LIBRARY");
-                            stmt.executeUpdate("INSERT INTO BOOKS(BNAME,GENRE,PRICE) VALUES ('"+bname+"','"+genre+"',"+price_int+")");
+                            stmt.executeUpdate("INSERT INTO BOOKS(BNAME,TYPE,BEST_SELLER,PRICE) VALUES ('"+bname+"','"+type+"','"+bestseller+"',"+price_int+")");
                             JOptionPane.showMessageDialog(null,"Book added!");
                             g.dispose();
 
@@ -579,14 +587,16 @@ public class Main {
 
                 });
 
-                g.add(l3);
+                g.add(l4);
                 g.add(create_but);
                 g.add(l1);
                 g.add(l2);
+                g.add(l3);
                 g.add(F_bname);
-                g.add(F_genre);
+                g.add(F_type);
+                g.add(F_bestSeller);
                 g.add(F_price);
-                g.setSize(350,200);//400 width and 500 height
+                g.setSize(350,300);//400 width and 500 height
                 g.setLayout(null);//using no layout managers
                 g.setVisible(true);//making the frame visible
                 g.setLocationRelativeTo(null);
@@ -612,47 +622,122 @@ public class Main {
                 l2=new JLabel("User ID(UID)");  //Label 2 for user ID
                 l2.setBounds(30,53, 100,30);
 
-                l3=new JLabel("Period(days)");  //Label 3 for period
-                l3.setBounds(30,90, 100,30);
+//                l3=new JLabel("Period(days)");  //Label 3 for period
+//                l3.setBounds(30,90, 100,30);
 
-                l4=new JLabel("Issued Date(DD-MM-YYYY)");  //Label 4 for issue date
-                l4.setBounds(30,127, 150,30);
+                l4=new JLabel("Issued Date (DD-MM-YYYY)");  //Label 4 for issue date
+                l4.setBounds(30,90, 150,30);
 
                 JTextField F_bid = new JTextField();
-                F_bid.setBounds(110, 15, 200, 30);
+                F_bid.setBounds(200, 15, 200, 30);
 
 
                 JTextField F_uid=new JTextField();
-                F_uid.setBounds(110, 53, 200, 30);
+                F_uid.setBounds(200, 53, 200, 30);
 
-                JTextField F_period=new JTextField();
-                F_period.setBounds(110, 90, 200, 30);
+//                JTextField F_period=new JTextField();
+//                F_period.setBounds(110, 90, 200, 30);
 
                 JTextField F_issue=new JTextField();
-                F_issue.setBounds(180, 130, 130, 30);
+                F_issue.setBounds(200, 90, 200, 30);
 
 
                 JButton create_but=new JButton("Submit");//creating instance of JButton
-                create_but.setBounds(130,170,80,25);//x axis, y axis, width, height
+                create_but.setBounds(150,170,80,25);//x axis, y axis, width, height
                 create_but.addActionListener(new ActionListener() {
 
                     public void actionPerformed(ActionEvent e){
 
                         String uid = F_uid.getText();
                         String bid = F_bid.getText();
-                        String period = F_period.getText();
+                        //String period = F_period.getText();
                         String issued_date = F_issue.getText();
 
-                        int period_int = Integer.parseInt(period);
 
+                        //int period_int = Integer.parseInt(period);
+                        Calendar c = Calendar.getInstance();
+                        Date issued_Date1 = null;
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                        try {
+                            issued_Date1 = sdf.parse(issued_date);
+                        } catch (ParseException parseException) {
+                            parseException.printStackTrace();
+                        }
+                        c.setTime(issued_Date1);
+                        c.add(Calendar.DATE,14);
+                        String due_Date = sdf.format(c.getTime());
+                        //System.out.println(due_Date);
+
+                        // check age
                         Connection connection = connect();
+                        Statement stmt3 = null;
+                        try {
+                            stmt3 = connection.createStatement();
+                            stmt3.executeUpdate("USE LIBRARY"); //use database
+                            stmt3=connection.createStatement();
+
+                            Integer age= 0;
+                            ResultSet rs = stmt3.executeQuery("select AGE from USERS where UID =" +uid);
+
+                            while (rs.next()) {
+                                age = rs.getInt(1);
+
+                            }
+                            if(age <= 12){
+                                ResultSet rs_items = stmt3.executeQuery("select count(*) from ISSUED where UID =" +uid);
+                                Integer items= 0;
+
+                                while (rs_items.next()) {
+                                    items = rs_items.getInt(1);
+
+                                }
+                                if(items >= 5){
+                                    JOptionPane.showMessageDialog(null,"Request Denied! \n you have already issued 5 items.");
+                                     return;
+                                }
+
+                            }
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }
 
                         try {
-                            Statement stmt = connection.createStatement();
-                            stmt.executeUpdate("USE LIBRARY");
-                            stmt.executeUpdate("INSERT INTO ISSUED(UID,BID,ISSUED_DATE,PERIOD) VALUES ('"+uid+"','"+bid+"','"+issued_date+"',"+period_int+")");
-                            JOptionPane.showMessageDialog(null,"Book Issued!");
-                            g.dispose();
+                            Statement stmt1 = connection.createStatement();
+                            stmt1.executeUpdate("USE LIBRARY"); //use database
+                            stmt1=connection.createStatement();
+
+                            String type= "";
+                            ResultSet rs = stmt1.executeQuery("select TYPE from BOOKS where BID =" +bid);
+
+                            while (rs.next()) {
+                                type = rs.getString(1);
+
+                            }
+                            Statement stmt2 = connection.createStatement();
+                            stmt2.executeUpdate("USE LIBRARY"); //use database
+                            stmt2 = connection.createStatement();
+                            Boolean bestseller= false;
+                            ResultSet rs1 = stmt2.executeQuery("select BEST_SELLER from BOOKS where BID =" +bid);
+                            while (rs1.next()) {
+                                bestseller = rs1.getBoolean(1);
+
+                            }
+
+                            if(type.equals("Reference Book") || type.equals("Magezine")){
+                                JOptionPane.showMessageDialog(null,"Reference Books and Magezines can not be iussed.") ;
+                            }else if(type.equals("Book")){
+
+                                if(!bestseller){
+                                    c.add(Calendar.DATE,7);
+                                    due_Date = sdf.format(c.getTime());
+                                }
+
+                                Statement stmt = connection.createStatement();
+                                stmt.executeUpdate("USE LIBRARY");//use database
+                                stmt.executeUpdate("INSERT INTO ISSUED(UID,BID,ISSUED_DATE,DUE_DATE) VALUES ('"+uid+"','"+bid+"','"+issued_date+"','"+due_Date+"')");
+                                JOptionPane.showMessageDialog(null,"Book Issued!\n Due date is :"+ due_Date);
+                                g.dispose();
+                            }
 
                         }
 
@@ -666,16 +751,16 @@ public class Main {
                 });
 
 
-                g.add(l3);
+                //g.add(l3);
                 g.add(l4);
                 g.add(create_but);
                 g.add(l1);
                 g.add(l2);
                 g.add(F_uid);
                 g.add(F_bid);
-                g.add(F_period);
+               // g.add(F_period);
                 g.add(F_issue);
-                g.setSize(350,250);//400 width and 500 height
+                g.setSize(450,250);//400 width and 500 height
                 g.setLayout(null);//using no layout managers
                 g.setVisible(true);//making the frame visible
                 g.setLocationRelativeTo(null);
@@ -729,7 +814,7 @@ public class Main {
                             String date2=return_date; //Intialize date2 with return date
 
                             //select issue date
-                            ResultSet rs = stmt.executeQuery("SELECT ISSUED_DATE FROM ISSUED WHERE IID="+iid);
+                            ResultSet rs = stmt.executeQuery("SELECT DUE_DATE FROM ISSUED WHERE IID="+iid);
                             while (rs.next()) {
                                 date1 = rs.getString(1);
 
@@ -755,20 +840,26 @@ public class Main {
                             g.dispose();
 
 
+//                            Connection connection1 = connect();
+//                            Statement stmt1 = connection1.createStatement();
+//                            stmt1.executeUpdate("USE LIBRARY");
+//                            ResultSet rs1 = stmt1.executeQuery("SELECT DUE_DATE FROM ISSUED WHERE IID="+iid); //set period
+//                            String dueDate=null;
+//                            while (rs1.next()) {
+//                                dueDate = rs1.getString(1);
+//
+//                            }
+//                            Date due_date=new SimpleDateFormat("dd-MM-yyyy").parse(dueDate);
+
+
+                            //int diff_int = Integer.parseInt(diff);
                             Connection connection1 = connect();
                             Statement stmt1 = connection1.createStatement();
                             stmt1.executeUpdate("USE LIBRARY");
-                            ResultSet rs1 = stmt1.executeQuery("SELECT PERIOD FROM ISSUED WHERE IID="+iid); //set period
-                            String diff=null;
-                            while (rs1.next()) {
-                                diff = rs1.getString(1);
-
-                            }
-                            int diff_int = Integer.parseInt(diff);
-                            if(ex.days > diff_int) { //If number of days are more than the period then calculcate fine
+                            if(ex.days > 0) { //If number of days are more than the period then calculcate fine
 
                                 //System.out.println(ex.days);
-                                double fine = (ex.days-diff_int)*0.10; //fine for every day after the period is Rs 10.
+                                double fine = (ex.days)*0.10; //fine for every day after the period is Rs 10.
                                 //update fine in the system
                                 stmt1.executeUpdate("UPDATE ISSUED SET FINE="+fine+" WHERE IID="+iid);
                                 String fine_str = ("Fine: $ "+fine);
